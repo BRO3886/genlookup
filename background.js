@@ -1,3 +1,32 @@
+// Send message to tab, with error handling
+function sendMessageToTab(tabId, message) {
+  // Check if tab exists and is loading
+  chrome.tabs.get(tabId, function (tab) {
+    if (chrome.runtime.lastError) {
+      console.error("Tab error:", chrome.runtime.lastError);
+      return;
+    }
+
+    // Make sure content script is injected
+    chrome.scripting
+      .executeScript({
+        target: { tabId: tabId },
+        files: ["content.js"],
+      })
+      .then(() => {
+        // Now send the message
+        chrome.tabs.sendMessage(tabId, message, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error("Message error:", chrome.runtime.lastError);
+          }
+        });
+      })
+      .catch((err) => {
+        console.error("Failed to inject content script:", err);
+      });
+  });
+}
+
 // Create context menu item when the extension is installed
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -16,7 +45,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     // Make sure the tab is valid and ready
     if (tab && tab.id !== chrome.tabs.TAB_ID_NONE) {
       // Execute content script to get page content for context
-      
+
       chrome.scripting
         .executeScript({
           target: { tabId: tab.id },
@@ -243,7 +272,7 @@ async function explainWithOllama(selectedText, pageContext, tabId) {
       `;
 
     // First, notify the user that we're processing
-    chrome.tabs.sendMessage(tabId, {
+    sendMessageToTab(tabId, {
       action: "showProcessing",
       message: "Generating explanation...",
     });

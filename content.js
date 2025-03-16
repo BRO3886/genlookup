@@ -1,12 +1,22 @@
+// Notify background script that content script is ready
+chrome.runtime.sendMessage({ action: "contentScriptReady" });
+
 // Listen for messages from the background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("Content script received message:", message);
+
   if (message.action === "showExplanation") {
     showExplanationPopup(message.explanation);
+    if (sendResponse) sendResponse({ status: "success" });
   } else if (message.action === "showError") {
     showErrorPopup(message.error);
+    if (sendResponse) sendResponse({ status: "error" });
   } else if (message.action === "showProcessing") {
     showProcessingPopup(message.message);
+    if (sendResponse) sendResponse({ status: "processing" });
   }
+
+  return true; // Keep the message channel open for async responses
 });
 
 // Function to create and show a popup with the explanation
