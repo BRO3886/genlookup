@@ -58,146 +58,145 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-// Helper function to convert HTML to Markdown-like format
-function htmlToMarkdown(element) {
-  let markdown = "";
-
-  // Process children recursively
-  for (const node of element.childNodes) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      // Text node - add its content
-      const text = node.textContent.trim();
-      if (text) {
-        markdown += text + " ";
-      }
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-      // Skip script, style, svg, and hidden elements
-      if (
-        ["SCRIPT", "STYLE", "SVG", "NOSCRIPT"].includes(node.tagName) ||
-        node.style.display === "none" ||
-        node.style.visibility === "hidden"
-      ) {
-        continue;
-      }
-
-      const tagName = node.tagName.toLowerCase();
-      let prefix = "";
-      let suffix = "";
-
-      // Handle different HTML elements
-      switch (tagName) {
-        case "h1":
-          prefix = "\n# ";
-          suffix = "\n";
-          break;
-        case "h2":
-          prefix = "\n## ";
-          suffix = "\n";
-          break;
-        case "h3":
-          prefix = "\n### ";
-          suffix = "\n";
-          break;
-        case "h4":
-        case "h5":
-        case "h6":
-          prefix = "\n#### ";
-          suffix = "\n";
-          break;
-        case "p":
-          prefix = "\n";
-          suffix = "\n";
-          break;
-        case "br":
-          prefix = "\n";
-          break;
-        case "hr":
-          prefix = "\n---\n";
-          break;
-        case "ul":
-          prefix = "\n";
-          suffix = "\n";
-          break;
-        case "ol":
-          prefix = "\n";
-          suffix = "\n";
-          break;
-        case "li":
-          prefix = "* ";
-          suffix = "\n";
-          break;
-        case "a":
-          if (node.href) {
-            prefix = "[";
-            suffix = "](" + node.href + ")";
-          }
-          break;
-        case "strong":
-        case "b":
-          prefix = "**";
-          suffix = "**";
-          break;
-        case "em":
-        case "i":
-          prefix = "*";
-          suffix = "*";
-          break;
-        case "code":
-          prefix = "`";
-          suffix = "`";
-          break;
-        case "pre":
-          prefix = "\n```\n";
-          suffix = "\n```\n";
-          break;
-        case "blockquote":
-          prefix = "\n> ";
-          suffix = "\n";
-          break;
-        case "img":
-          if (node.alt && node.src) {
-            prefix = "![" + node.alt + "](" + node.src + ")";
-            // Skip processing children for images
-            markdown += prefix;
-            continue;
-          }
-          break;
-        case "table":
-          prefix = "\n";
-          suffix = "\n";
-          break;
-        case "tr":
-          suffix = "\n";
-          break;
-        case "th":
-        case "td":
-          prefix = "| ";
-          suffix = " ";
-          break;
-        case "div":
-          // Only add newlines for divs that likely represent blocks
-          if (window.getComputedStyle(node).display === "block") {
-            prefix = "\n";
-            suffix = "\n";
-          }
-          break;
-      }
-
-      markdown += prefix;
-
-      // Recursively process child nodes
-      markdown += htmlToMarkdown(node);
-
-      markdown += suffix;
-    }
-  }
-
-  return markdown;
-}
-
 // Function to get page content and convert HTML to Markdown
 function getPageContent() {
   // This function extracts the important content from the page and converts it to Markdown
+  // Helper function to convert HTML to Markdown-like format
+  function htmlToMarkdown(element) {
+    let markdown = "";
+
+    // Process children recursively
+    for (const node of element.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        // Text node - add its content
+        const text = node.textContent.trim();
+        if (text) {
+          markdown += text + " ";
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // Skip script, style, svg, and hidden elements
+        if (
+          ["SCRIPT", "STYLE", "SVG", "NOSCRIPT"].includes(node.tagName) ||
+          node.style.display === "none" ||
+          node.style.visibility === "hidden"
+        ) {
+          continue;
+        }
+
+        const tagName = node.tagName.toLowerCase();
+        let prefix = "";
+        let suffix = "";
+
+        // Handle different HTML elements
+        switch (tagName) {
+          case "h1":
+            prefix = "\n# ";
+            suffix = "\n";
+            break;
+          case "h2":
+            prefix = "\n## ";
+            suffix = "\n";
+            break;
+          case "h3":
+            prefix = "\n### ";
+            suffix = "\n";
+            break;
+          case "h4":
+          case "h5":
+          case "h6":
+            prefix = "\n#### ";
+            suffix = "\n";
+            break;
+          case "p":
+            prefix = "\n";
+            suffix = "\n";
+            break;
+          case "br":
+            prefix = "\n";
+            break;
+          case "hr":
+            prefix = "\n---\n";
+            break;
+          case "ul":
+            prefix = "\n";
+            suffix = "\n";
+            break;
+          case "ol":
+            prefix = "\n";
+            suffix = "\n";
+            break;
+          case "li":
+            prefix = "* ";
+            suffix = "\n";
+            break;
+          case "a":
+            if (node.href) {
+              prefix = "[";
+              suffix = "](" + node.href + ")";
+            }
+            break;
+          case "strong":
+          case "b":
+            prefix = "**";
+            suffix = "**";
+            break;
+          case "em":
+          case "i":
+            prefix = "*";
+            suffix = "*";
+            break;
+          case "code":
+            prefix = "`";
+            suffix = "`";
+            break;
+          case "pre":
+            prefix = "\n```\n";
+            suffix = "\n```\n";
+            break;
+          case "blockquote":
+            prefix = "\n> ";
+            suffix = "\n";
+            break;
+          case "img":
+            if (node.alt && node.src) {
+              prefix = "![" + node.alt + "](" + node.src + ")";
+              // Skip processing children for images
+              markdown += prefix;
+              continue;
+            }
+            break;
+          case "table":
+            prefix = "\n";
+            suffix = "\n";
+            break;
+          case "tr":
+            suffix = "\n";
+            break;
+          case "th":
+          case "td":
+            prefix = "| ";
+            suffix = " ";
+            break;
+          case "div":
+            // Only add newlines for divs that likely represent blocks
+            if (window.getComputedStyle(node).display === "block") {
+              prefix = "\n";
+              suffix = "\n";
+            }
+            break;
+        }
+
+        markdown += prefix;
+
+        // Recursively process child nodes
+        markdown += htmlToMarkdown(node);
+
+        markdown += suffix;
+      }
+    }
+
+    return markdown;
+  }
 
   // Find main content area (simple heuristic)
   let mainContent = document.body;
