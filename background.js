@@ -13,18 +13,32 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     // Get the selected text
     const selectedText = info.selectionText;
 
-    // Execute content script to get page content for context
-    chrome.scripting
-      .executeScript({
-        target: { tabId: tab.id },
-        func: getPageContent,
-      })
-      .then((results) => {
-        const pageContent = results[0].result;
+    // Make sure the tab is valid and ready
+    if (tab && tab.id !== chrome.tabs.TAB_ID_NONE) {
+      // Execute content script to get page content for context
+      
+      chrome.scripting
+        .executeScript({
+          target: { tabId: tab.id },
+          func: getPageContent,
+          world: "MAIN", // Execute in the main world to access page's DOM
+        })
+        .then((results) => {
+          if (results && results.length > 0) {
+            const pageContent = results[0].result;
 
-        // Send to Ollama for explanation
-        explainWithOllama(selectedText, pageContent, tab.id);
-      });
+            // Send to Ollama for explanation
+            explainWithOllama(selectedText, pageContent, tab.id);
+          } else {
+            console.error("Failed to get page content");
+          }
+        })
+        .catch((err) => {
+          console.error("Error executing script:", err);
+          // Fallback to just sending the selection without context
+          explainWithOllama(selectedText, "Context unavailable", tab.id);
+        });
+    }
   }
 });
 
@@ -208,7 +222,7 @@ async function explainWithOllama(selectedText, pageContext, tabId) {
     // Get Ollama settings from storage
     const settings = await chrome.storage.sync.get({
       ollamaUrl: "http://localhost:11434",
-      model: "gemma3",
+      model: "llama3",
     });
 
     // Create a prompt combining selected text and context
@@ -228,26 +242,55 @@ async function explainWithOllama(selectedText, pageContext, tabId) {
         Provide a clear, concise explanation of what the selected text means in the context of this webpage.
       `;
 
-    // Send request to Ollama API
-    const response = await fetch(`${settings.ollamaUrl}/api/generate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: settings.model,
-        prompt: prompt,
-        stream: false,
-      }),
-    });
-
-    const data = await response.json();
-
-    // Send the explanation to a popup or inject into page
+    // First, notify the user that we're processing
     chrome.tabs.sendMessage(tabId, {
-      action: "showExplanation",
-      explanation: data.response,
+      action: "showProcessing",
+      message: "Generating explanation...",
     });
+
+    try {
+      // Send request to Ollama API with mode: 'no-cors' to bypass CORS restriction
+      // Note: This will make the response opaque, but we can still try
+      const response = await fetch(`${settings.ollamaUrl}/api/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: settings.model,
+          prompt: prompt,
+          stream: false,
+        }),
+        // Add this to attempt to bypass CORS
+        mode: "no-cors",
+      });
+
+      // Check if response is available
+      if (response) {
+        try {
+          const data = await response.json();
+
+          // Send the explanation to a popup or inject into page
+          chrome.tabs.sendMessage(tabId, {
+            action: "showExplanation",
+            explanation: data.response,
+          });
+        } catch (jsonError) {
+          // If we can't parse the response due to CORS, show a specific error
+          chrome.tabs.sendMessage(tabId, {
+            action: "showError",
+            error:
+              "Cannot access Ollama API due to CORS restrictions. Please see the extension's README for setup instructions.",
+          });
+        }
+      } else {
+        throw new Error("No response from Ollama API");
+      }
+    } catch (fetchError) {
+      throw new Error(
+        `Ollama API error: ${fetchError.message}. Please ensure Ollama is running and accessible.`
+      );
+    }
   } catch (error) {
     console.error("Error getting explanation:", error);
     chrome.tabs.sendMessage(tabId, {

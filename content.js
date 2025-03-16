@@ -4,6 +4,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     showExplanationPopup(message.explanation);
   } else if (message.action === "showError") {
     showErrorPopup(message.error);
+  } else if (message.action === "showProcessing") {
+    showProcessingPopup(message.message);
   }
 });
 
@@ -16,45 +18,45 @@ function showExplanationPopup(explanation) {
   const popup = document.createElement("div");
   popup.id = "ollama-explanation-popup";
   popup.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      max-width: 400px;
-      max-height: 80vh;
-      background-color: white;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 15px;
-      z-index: 10000;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      overflow-y: auto;
-      font-family: Arial, sans-serif;
-    `;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    max-width: 400px;
+    max-height: 80vh;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+    z-index: 10000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    font-family: Arial, sans-serif;
+  `;
 
   // Add title
   const title = document.createElement("h3");
   title.textContent = "Explanation";
   title.style.cssText = `
-      margin-top: 0;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 5px;
-    `;
+    margin-top: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+  `;
   popup.appendChild(title);
 
   // Add close button
   const closeButton = document.createElement("button");
   closeButton.textContent = "×";
   closeButton.style.cssText = `
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: #666;
-    `;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+  `;
   closeButton.addEventListener("click", () => {
     removeExistingPopup();
   });
@@ -73,9 +75,9 @@ function showExplanationPopup(explanation) {
 
   content.innerHTML = formattedExplanation;
   content.style.cssText = `
-      line-height: 1.5;
-      text-align: left;
-    `;
+    line-height: 1.5;
+    text-align: left;
+  `;
   popup.appendChild(content);
 
   // Add to page
@@ -83,6 +85,79 @@ function showExplanationPopup(explanation) {
 
   // Auto-remove after 2 minutes
   setTimeout(removeExistingPopup, 120000);
+}
+
+// Function to show processing popup
+function showProcessingPopup(message) {
+  removeExistingPopup();
+
+  const popup = document.createElement("div");
+  popup.id = "ollama-explanation-popup";
+  popup.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    max-width: 400px;
+    background-color: #f0f8ff;
+    border: 1px solid #b3d4fc;
+    border-radius: 8px;
+    padding: 15px;
+    z-index: 10000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+  `;
+
+  const title = document.createElement("h3");
+  title.textContent = "Processing";
+  title.style.color = "#1976d2";
+  popup.appendChild(title);
+
+  const closeButton = document.createElement("button");
+  closeButton.textContent = "×";
+  closeButton.style.cssText = `
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+  `;
+  closeButton.addEventListener("click", () => {
+    removeExistingPopup();
+  });
+  popup.appendChild(closeButton);
+
+  const content = document.createElement("div");
+  content.textContent = message;
+
+  // Add loading spinner
+  const spinner = document.createElement("div");
+  spinner.style.cssText = `
+    margin-top: 10px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 2s linear infinite;
+  `;
+
+  // Add keyframe animation for spinner
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  content.appendChild(spinner);
+  popup.appendChild(content);
+
+  document.body.appendChild(popup);
 }
 
 // Function to show error popup
@@ -93,18 +168,18 @@ function showErrorPopup(errorMessage) {
   const popup = document.createElement("div");
   popup.id = "ollama-explanation-popup";
   popup.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      max-width: 400px;
-      background-color: #fff0f0;
-      border: 1px solid #ffcaca;
-      border-radius: 8px;
-      padding: 15px;
-      z-index: 10000;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      font-family: Arial, sans-serif;
-    `;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    max-width: 400px;
+    background-color: #fff0f0;
+    border: 1px solid #ffcaca;
+    border-radius: 8px;
+    padding: 15px;
+    z-index: 10000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+  `;
 
   const title = document.createElement("h3");
   title.textContent = "Error";
@@ -114,15 +189,15 @@ function showErrorPopup(errorMessage) {
   const closeButton = document.createElement("button");
   closeButton.textContent = "×";
   closeButton.style.cssText = `
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: #666;
-    `;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #666;
+  `;
   closeButton.addEventListener("click", () => {
     removeExistingPopup();
   });
