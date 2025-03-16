@@ -14,6 +14,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === "showProcessing") {
     showProcessingPopup(message.message);
     if (sendResponse) sendResponse({ status: "processing" });
+  } else if (message.action === "ping") {
+    // Respond to ping to confirm content script is loaded
+    if (sendResponse) sendResponse({ status: "pong" });
   }
 
   return true; // Keep the message channel open for async responses

@@ -10,7 +10,8 @@
         "scripting"
     ],
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "dist/background.bundle.js",
+        "type": "module"
     },
     "action": {
         "default_popup": "popup.html",
@@ -26,6 +27,6 @@
         "128": "images/icon128.png"
     },
     "host_permissions": [
-        "http://localhost:11434/*"
+        "http://0.0.0.0:11434/*"
     ]
 }

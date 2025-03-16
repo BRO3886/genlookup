@@ -1,29 +1,10 @@
+// Import the Ollama browser client
+import { Ollama } from "ollama/browser";
+
 // Send message to tab, with error handling
 function sendMessageToTab(tabId, message) {
-  // Check if tab exists and is loading
-  chrome.tabs.get(tabId, function (tab) {
-    if (chrome.runtime.lastError) {
-      console.error("Tab error:", chrome.runtime.lastError);
-      return;
-    }
-
-    // Make sure content script is injected
-    chrome.scripting
-      .executeScript({
-        target: { tabId: tabId },
-        files: ["content.js"],
-      })
-      .then(() => {
-        // Now send the message
-        chrome.tabs.sendMessage(tabId, message, (response) => {
-          if (chrome.runtime.lastError) {
-            console.error("Message error:", chrome.runtime.lastError);
-          }
-        });
-      })
-      .catch((err) => {
-        console.error("Failed to inject content script:", err);
-      });
+  chrome.tabs.sendMessage(tabId, message).catch((error) => {
+    console.error("Error sending message to tab:", error);
   });
 }
 
@@ -44,28 +25,34 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
     // Make sure the tab is valid and ready
     if (tab && tab.id !== chrome.tabs.TAB_ID_NONE) {
-      // Execute content script to get page content for context
+      // First ensure content script is loaded
+      ensureContentScriptLoaded(tab.id)
+        .then(() => {
+          // Execute content script to get page content for context
+          chrome.scripting
+            .executeScript({
+              target: { tabId: tab.id },
+              func: getPageContent,
+              world: "MAIN", // Execute in the main world to access page's DOM
+            })
+            .then((results) => {
+              if (results && results.length > 0) {
+                const pageContent = results[0].result;
 
-      chrome.scripting
-        .executeScript({
-          target: { tabId: tab.id },
-          func: getPageContent,
-          world: "MAIN", // Execute in the main world to access page's DOM
+                // Send to Ollama for explanation
+                explainWithOllama(selectedText, pageContent, tab.id);
+              } else {
+                console.error("Failed to get page content");
+              }
+            })
+            .catch((err) => {
+              console.error("Error executing script:", err);
+              // Fallback to just sending the selection without context
+              explainWithOllama(selectedText, "Context unavailable", tab.id);
+            });
         })
-        .then((results) => {
-          if (results && results.length > 0) {
-            const pageContent = results[0].result;
-
-            // Send to Ollama for explanation
-            explainWithOllama(selectedText, pageContent, tab.id);
-          } else {
-            console.error("Failed to get page content");
-          }
-        })
-        .catch((err) => {
-          console.error("Error executing script:", err);
-          // Fallback to just sending the selection without context
-          explainWithOllama(selectedText, "Context unavailable", tab.id);
+        .catch((error) => {
+          console.error("Failed to inject content script:", error);
         });
     }
   }
@@ -271,6 +258,8 @@ async function explainWithOllama(selectedText, pageContext, tabId) {
         Provide a clear, concise explanation of what the selected text means in the context of this webpage.
       `;
 
+    console.log(prompt);
+
     // First, notify the user that we're processing
     sendMessageToTab(tabId, {
       action: "showProcessing",
@@ -278,46 +267,25 @@ async function explainWithOllama(selectedText, pageContext, tabId) {
     });
 
     try {
-      // Send request to Ollama API with mode: 'no-cors' to bypass CORS restriction
-      // Note: This will make the response opaque, but we can still try
-      const response = await fetch(`${settings.ollamaUrl}/api/generate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: settings.model,
-          prompt: prompt,
-          stream: false,
-        }),
-        // Add this to attempt to bypass CORS
-        mode: "no-cors",
+      // Configure the Ollama client with the custom host
+      const ollamaClient = new Ollama({
+        host: settings.ollamaUrl,
+      });
+      // Use the chat API instead of direct fetch
+      const response = await ollamaClient.chat({
+        model: settings.model,
+        messages: [{ role: "user", content: prompt }],
+        stream: false,
       });
 
-      // Check if response is available
-      if (response) {
-        try {
-          const data = await response.json();
-
-          // Send the explanation to a popup or inject into page
-          chrome.tabs.sendMessage(tabId, {
-            action: "showExplanation",
-            explanation: data.response,
-          });
-        } catch (jsonError) {
-          // If we can't parse the response due to CORS, show a specific error
-          chrome.tabs.sendMessage(tabId, {
-            action: "showError",
-            error:
-              "Cannot access Ollama API due to CORS restrictions. Please see the extension's README for setup instructions.",
-          });
-        }
-      } else {
-        throw new Error("No response from Ollama API");
-      }
-    } catch (fetchError) {
+      // Send the explanation to the content script
+      chrome.tabs.sendMessage(tabId, {
+        action: "showExplanation",
+        explanation: response.message.content,
+      });
+    } catch (apiError) {
       throw new Error(
-        `Ollama API error: ${fetchError.message}. Please ensure Ollama is running and accessible.`
+        `Ollama API error: ${apiError.message}. Please ensure Ollama is running and accessible.`
       );
     }
   } catch (error) {
@@ -327,4 +295,27 @@ async function explainWithOllama(selectedText, pageContext, tabId) {
       error: error.message,
     });
   }
+}
+
+// Function to ensure content script is loaded
+async function ensureContentScriptLoaded(tabId) {
+  // Check if we can establish communication with the content script
+  try {
+    const response = await chrome.tabs
+      .sendMessage(tabId, { action: "ping" })
+      .catch(() => null);
+
+    // If we got a response, the content script is already loaded
+    if (response && response.status === "pong") {
+      return;
+    }
+  } catch (e) {
+    // No response means content script is not loaded
+  }
+
+  // Inject the content script
+  return chrome.scripting.executeScript({
+    target: { tabId: tabId },
+    files: ["content.js"],
+  });
 }
