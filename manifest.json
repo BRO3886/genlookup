@@ -10,7 +10,7 @@
         "scripting"
     ],
     "background": {
-        "service_worker": "dist/background.bundle.js",
+        "service_worker": "background.bundle.js",
         "type": "module"
     },
     "action": {

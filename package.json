@@ -4,9 +4,9 @@
   "description": "Browser extension that looks up selected text using Ollama",
   "type": "module",
   "scripts": {
-    "build": "esbuild background.js --bundle --outfile=dist/background.bundle.js --format=esm && npm run copy-files",
-    "watch": "esbuild background.js --bundle --outfile=dist/background.bundle.js --format=esm --watch",
-    "copy-files": "cp manifest.json dist/ && cp content.js dist/ && cp popup.html dist/ && cp popup.js dist/ && mkdir -p dist/images && cp -r images/* dist/images/ 2>/dev/null || true"
+    "build": "esbuild src/background.js --bundle --outfile=dist/background.bundle.js --format=esm && npm run copy-files",
+    "watch": "esbuild src/background.js --bundle --outfile=dist/background.bundle.js --format=esm --watch",
+    "copy-files": "cp manifest.json dist/ && cp -r src/* dist/ && cp assets/popup.html dist/ && mkdir -p dist/images && cp -r assets/images/* dist/images/ 2>/dev/null || true"
   },
   "dependencies": {
     "ollama": "^0.5.14"
