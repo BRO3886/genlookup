@@ -12,7 +12,7 @@ function sendMessageToTab(tabId, message) {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "lookup-selection",
-    title: "Lookup",
+    title: "GenLookup",
     contexts: ["selection"],
   });
 });
