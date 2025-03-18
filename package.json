@@ -1,7 +1,7 @@
 {
   "name": "genlookup",
   "version": "1.0.0",
-  "description": "Browser extension that explains selected text using Ollama",
+  "description": "Browser extension that looks up selected text using Ollama",
   "type": "module",
   "scripts": {
     "build": "esbuild background.js --bundle --outfile=dist/background.bundle.js --format=esm && npm run copy-files",

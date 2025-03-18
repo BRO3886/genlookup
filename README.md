@@ -1,13 +1,13 @@
 # GenLookup
 
-This browser extension adds an "Explain" option to the right-click context menu when text is selected on any webpage. It sends the selected text along with the page context to an Ollama server for explanation.
+This browser extension adds an "Lookup" option to the right-click context menu when text is selected on any webpage. It sends the selected text along with the page context to an Ollama server for lookup.
 
 ## Architecture Overview
 
 ```mermaid
 flowchart TD
     A[User selects text] --> B[Right-click context menu]
-    B --> C[Click 'Explain' option]
+    B --> C[Click 'Lookup' option]
     C --> D[Background script]
     D --> E[Get page context]
     D --> F[Get selected text]
@@ -71,7 +71,7 @@ sequenceDiagram
 
 ## Features
 
-- Adds "Explain" to the right-click menu for selected text
+- Adds "Lookup" to the right-click menu for selected text
 - Sends selected text and page context to Ollama for explanation
 - Shows explanation in a popup overlay on the page
 - Configurable Ollama server URL and model
@@ -118,7 +118,7 @@ sequenceDiagram
 
 1. Select text on any webpage
 2. Right-click to open the context menu
-3. Click "Explain" from the menu
+3. Click "Lookup" from the menu
 4. Wait for the explanation to appear in a popup
 
 ## Technical Details
@@ -179,7 +179,7 @@ classDiagram
 The background script is the backbone of the extension:
 
 - Sets up the context menu item when the extension is installed
-- Handles clicks on the "Explain" menu item
+- Handles clicks on the "Lookup" menu item
 - Extracts the selected text and page context
 - Communicates with the Ollama API using the official client
 - Manages communication with the content script
