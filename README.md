@@ -2,6 +2,8 @@
 
 This browser extension adds an "Lookup" option to the right-click context menu when text is selected on any webpage. It sends the selected text along with the page context to an Ollama server for lookup.
 
+![screen recording](assets/recording.mov)
+
 ## Installation
 
 ### Prerequisites
