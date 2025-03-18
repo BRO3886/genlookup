@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "build": "esbuild src/background.js --bundle --outfile=dist/background.bundle.js --format=esm && npm run copy-files",
-    "watch": "esbuild src/background.js --bundle --outfile=dist/background.bundle.js --format=esm --watch",
     "copy-files": "cp manifest.json dist/ && cp -r src/* dist/ && cp assets/popup.html dist/ && mkdir -p dist/images && cp -r assets/images/* dist/images/ 2>/dev/null || true"
   },
   "dependencies": {

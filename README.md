@@ -220,19 +220,7 @@ To work on the extension:
 3. For continuous development, use `npm run watch` to automatically rebuild when files change
 4. Reload the extension in your browser to see the changes
 
-## Build Process
 
-```mermaid
-flowchart TD
-    A[background.js] --> B[esbuild]
-    B --> C[dist/background.bundle.js]
-    D[content.js] --> E[copy files]
-    F[popup.html] --> E
-    G[popup.js] --> E
-    H[manifest.json] --> E
-    I[images/*] --> E
-    E --> J[dist/ directory]
-```
 
 ## Notes
 
