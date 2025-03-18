@@ -11,15 +11,18 @@ function sendMessageToTab(tabId, message) {
 // Create context menu item when the extension is installed
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: "explain-selection",
-    title: "Explain",
+    id: "lookup-selection",
+    title: "Lookup",
     contexts: ["selection"],
   });
 });
 
 // Handle context menu click
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "explain-selection") {
+  if (info.menuItemId === "lookup-selection") {
+    // Disable the context menu item to prevent further clicks
+    chrome.contextMenus.update("lookup-selection", { enabled: false });
+
     // Get the selected text
     const selectedText = info.selectionText;
     // Make sure the tab is valid and ready
@@ -39,19 +42,41 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
                 const pageContent = results[0].result;
 
                 // Send to Ollama for explanation
-                explainWithOllama(selectedText, pageContent, tab.id);
+                explainWithOllama(selectedText, pageContent, tab.id).finally(
+                  () => {
+                    // Re-enable the context menu item after processing
+                    chrome.contextMenus.update("lookup-selection", {
+                      enabled: true,
+                    });
+                  }
+                );
               } else {
                 console.error("Failed to get page content");
+                // Re-enable the context menu item in case of failure
+                chrome.contextMenus.update("lookup-selection", {
+                  enabled: true,
+                });
               }
             })
             .catch((err) => {
               console.error("Error executing script:", err);
               // Fallback to just sending the selection without context
-              explainWithOllama(selectedText, "Context unavailable", tab.id);
+              explainWithOllama(
+                selectedText,
+                "Context unavailable",
+                tab.id
+              ).finally(() => {
+                // Re-enable the context menu item after processing
+                chrome.contextMenus.update("lookup-selection", {
+                  enabled: true,
+                });
+              });
             });
         })
         .catch((error) => {
           console.error("Failed to inject content script:", error);
+          // Re-enable the context menu item in case of failure
+          chrome.contextMenus.update("lookup-selection", { enabled: true });
         });
     }
   }
@@ -257,10 +282,8 @@ async function explainWithOllama(selectedText, pageContext, tabId) {
         IMPORTANT: Dont focus on explaining the article, just the selected text.
         IMPORTANT: Don't ask preamble or postamble questions, just explain the selected text.
         IMPORTANT: You should NOT answer with unnecessary preamble or postamble (such as summarizing your action), unless the user asks you to.
-        IMPORTANT: Keep your responses short, since they will be displayed on a command line interface. You MUST answer concisely with fewer than 10 lines, unless user asks for detail. Answer the user's question directly, without additional details. Three line answers are best. Avoid introductions, conclusions, and explanations. You MUST avoid text before/after your response, such as "Okay, this is what the selected text means <answer>.", "Here is the content of the file..." or "Based on the information provided, the answer is..." or "Here is what I will do next...".
+        IMPORTANT: Keep your responses medium-length, since they will be displayed on a popup overlay. You MUST answer concisely with fewer than 10 lines, unless user asks for detail. Answer the user's question directly, without additional details. Five line answers are best. Avoid introductions and conclusions. You MUST avoid text before/after your response, such as "Okay, this is what the selected text means <answer>.", "Here is the content of the file..." or "Based on the information provided, the answer is..." or "Here is what I will do next...".
       `;
-
-    console.log(selectedText);
 
     // First, notify the user that we're processing
     sendMessageToTab(tabId, {

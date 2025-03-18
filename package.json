@@ -1,5 +1,5 @@
 {
-  "name": "genexplainer",
+  "name": "genlookup",
   "version": "1.0.0",
   "description": "Browser extension that explains selected text using Ollama",
   "type": "module",

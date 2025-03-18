@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "GenExplainer",
+    "name": "GenLookup",
     "version": "1.0",
-    "description": "Explains selected text using Ollama",
+    "description": "Lookup selected text using Ollama",
     "permissions": [
         "contextMenus",
         "activeTab",
