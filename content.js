@@ -24,80 +24,103 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Function to create and show a popup with the explanation
 function showExplanationPopup(explanation) {
-  // Remove any existing popup
-  removeExistingPopup();
-
-  // Create popup container
-  const popup = document.createElement("div");
-  popup.id = "ollama-explanation-popup";
-  popup.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    max-width: 400px;
-    max-height: 80vh;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 15px;
-    z-index: 10000;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    font-family: Arial, sans-serif;
-  `;
-
-  // Add title
-  const title = document.createElement("h3");
-  title.textContent = "Explanation";
-  title.style.cssText = `
-    margin-top: 0;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-  `;
-  popup.appendChild(title);
-
-  // Add close button
-  const closeButton = document.createElement("button");
-  closeButton.textContent = "×";
-  closeButton.style.cssText = `
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: #666;
-  `;
-  closeButton.addEventListener("click", () => {
+  // Create popup container if it doesn't exist
+  if (explanation.index === 0) {
     removeExistingPopup();
-  });
-  popup.appendChild(closeButton);
+  }
+
+  let popup = document.getElementById("ollama-explanation-popup");
+  if (!popup) {
+    popup = document.createElement("div");
+    popup.id = "ollama-explanation-popup";
+    popup.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      max-width: 400px;
+      max-height: 80vh;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      z-index: 10000;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+      font-family: Arial, sans-serif;
+      color: black !important;
+      overflow-y: scroll;
+      min-width: 400px;
+    `;
+    document.body.appendChild(popup); // Ensure the popup is added to the DOM
+  }
+
+  // // Add title if it doesn't exist
+  // let title =
+  //   popup.querySelector("h3") &&
+  //   popup.querySelector("h3").textContent !== "Explanation";
+  // if (!title) {
+  //   title = document.createElement("h3");
+  //   title.textContent = "Explanation";
+  //   title.style.cssText = `
+  //     margin-top: 0;
+  //     margin-bottom: 10px;
+  //     border-bottom: 1px solid #eee;
+  //     padding-bottom: 5px;
+  //     color: black !important;
+  //   `;
+  //   popup.appendChild(title);
+  // }
+
+  // Add close button if it doesn't exist
+  let closeButton = popup.querySelector("button");
+  if (!closeButton) {
+    closeButton = document.createElement("button");
+    closeButton.textContent = "×";
+    closeButton.style.cssText = `
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+    `;
+    closeButton.addEventListener("click", () => {
+      removeExistingPopup();
+    });
+    popup.appendChild(closeButton);
+  }
 
   // Add explanation content with Markdown formatting support
-  const content = document.createElement("div");
+  let content = document.getElementById("ollama-explanation-content");
+  if (!content) {
+    content = document.createElement("div");
+    content.id = "ollama-explanation-content";
+    content.style.cssText = `
+      line-height: 1.5;
+      text-align: left;
+      z-index: 10000;
+      color: black !important;
+    `;
+    popup.appendChild(content);
+  }
 
   // Simple Markdown-to-HTML conversion for basic formatting
-  const formattedExplanation = explanation
+  const formattedExplanation = explanation.content
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold
     .replace(/\*(.*?)\*/g, "<em>$1</em>") // Italic
     .replace(/`(.*?)`/g, "<code>$1</code>") // Inline code
+    .replace(/\[(.*?)\]\((.*?)\)/g, "<a href='$2'>$1</a>") // Links
     .replace(/\n\n/g, "<br><br>") // Paragraphs
-    .replace(/\n/g, "<br>"); // Line breaks
+    .replace(/\n/g, ""); // Line breaks
 
-  content.innerHTML = formattedExplanation;
-  content.style.cssText = `
-    line-height: 1.5;
-    text-align: left;
-  `;
-  popup.appendChild(content);
-
-  // Add to page
-  document.body.appendChild(popup);
-
-  // Auto-remove after 2 minutes
-  setTimeout(removeExistingPopup, 120000);
+  // content.innerHTML += `<p>${formattedExplanation}</p>`;
+  content.innerHTML += formattedExplanation;
+  // // Add to page if it's the first chunk
+  // if (explanation.index === 0) {
+  //   document.body.appendChild(popup);
+  // }
 }
 
 // Function to show processing popup
@@ -118,6 +141,7 @@ function showProcessingPopup(message) {
     z-index: 10000;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     font-family: Arial, sans-serif;
+    color: black !important;
   `;
 
   const title = document.createElement("h3");
@@ -192,7 +216,7 @@ function showErrorPopup(errorMessage) {
     z-index: 10000;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     font-family: Arial, sans-serif;
-    color: black !important;
+    color: red !important;
   `;
 
   const title = document.createElement("h3");

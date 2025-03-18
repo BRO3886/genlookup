@@ -22,7 +22,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "explain-selection") {
     // Get the selected text
     const selectedText = info.selectionText;
-
     // Make sure the tab is valid and ready
     if (tab && tab.id !== chrome.tabs.TAB_ID_NONE) {
       // First ensure content script is loaded
@@ -242,22 +241,26 @@ async function explainWithOllama(selectedText, pageContext, tabId) {
 
     // Create a prompt combining selected text and context
     const prompt = `
-        Please explain the following text that was selected from a webpage:
-        
-        """
-        ${selectedText}
-        """
-        
+        INSTRUCTIONS:
+        Act as a helpful, all-knowing assistant that explains the following text (in not more than 100 words) henceforth referred to as "selected text", that was selected from a webpage:
+
+        Focus on providing a clear, concise explanation of what the **selected text** means in the context of this webpage, and not the entire webpage. Also add a suggested reading section that includes the most relevant links in your opinion that are related to the selected text. 
+        ---
+        CONTEXT:
         Here is the webpage content in Markdown format for context:
-        
-        """
         ${pageContext}
-        """
+
+        ----
+        QUESTION:
+        What is the meaning of the following **selected text** in the context of this webpage: ${selectedText}
         
-        Provide a clear, concise explanation of what the selected text means in the context of this webpage.
+        IMPORTANT: Dont focus on explaining the article, just the selected text.
+        IMPORTANT: Don't ask preamble or postamble questions, just explain the selected text.
+        IMPORTANT: You should NOT answer with unnecessary preamble or postamble (such as summarizing your action), unless the user asks you to.
+        IMPORTANT: Keep your responses short, since they will be displayed on a command line interface. You MUST answer concisely with fewer than 10 lines, unless user asks for detail. Answer the user's question directly, without additional details. Three line answers are best. Avoid introductions, conclusions, and explanations. You MUST avoid text before/after your response, such as "Okay, this is what the selected text means <answer>.", "Here is the content of the file..." or "Based on the information provided, the answer is..." or "Here is what I will do next...".
       `;
 
-    console.log(prompt);
+    console.log(selectedText);
 
     // First, notify the user that we're processing
     sendMessageToTab(tabId, {
@@ -274,14 +277,24 @@ async function explainWithOllama(selectedText, pageContext, tabId) {
       const response = await ollamaClient.chat({
         model: settings.model,
         messages: [{ role: "user", content: prompt }],
-        stream: false,
+        stream: true,
       });
 
-      // Send the explanation to the content script
-      chrome.tabs.sendMessage(tabId, {
-        action: "showExplanation",
-        explanation: response.message.content,
-      });
+      let index = 0;
+      for await (const chunk of response) {
+        if (chunk.done) {
+          break;
+        }
+        // Send the explanation to the content script
+        chrome.tabs.sendMessage(tabId, {
+          action: "showExplanation",
+          explanation: {
+            index: index,
+            content: chunk.message.content,
+          },
+        });
+        index++;
+      }
     } catch (apiError) {
       throw new Error(
         `Ollama API error: ${apiError.message}. Please ensure Ollama is running and accessible.`
