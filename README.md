@@ -2,6 +2,42 @@
 
 This browser extension adds an "Lookup" option to the right-click context menu when text is selected on any webpage. It sends the selected text along with the page context to an Ollama server for lookup.
 
+## Installation
+
+### Prerequisites
+
+- Ollama installed and running on your computer or a remote server
+- A browser that supports extensions (Chrome, Firefox, Edge)
+- Node.js and npm (for building the extension)
+
+### Building the Extension
+
+1. Clone this repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Build the extension:
+   ```
+   npm run build
+   ```
+4. The complete extension will be available in the `dist` directory
+
+### Chrome Installation
+
+1. Build the extension as described above
+2. Open Chrome and navigate to `chrome://extensions/`
+3. Enable "Developer mode" by toggling the switch in the top right
+4. Click "Load unpacked" and select the `dist` folder
+5. The extension should now be installed and active
+
+### Firefox Installation
+
+1. Build the extension as described above
+2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
+3. Click "Load Temporary Add-on..." and select the `manifest.json` file in the `dist` folder
+4. The extension should now be installed and active
+
 ## Architecture Overview
 
 ```mermaid
@@ -76,43 +112,6 @@ sequenceDiagram
 - Shows explanation in a popup overlay on the page
 - Configurable Ollama server URL and model
 - Uses the official Ollama JavaScript client for reliable communication
-
-## Installation
-
-### Prerequisites
-
-- Ollama installed and running on your computer or a remote server
-- A browser that supports extensions (Chrome, Firefox, Edge)
-- Node.js and npm (for building the extension)
-- Properly configured CORS settings for Ollama (see CORS Configuration section below)
-
-### Building the Extension
-
-1. Clone this repository
-2. Install dependencies:
-   ```
-   npm install
-   ```
-3. Build the extension:
-   ```
-   npm run build
-   ```
-4. The complete extension will be available in the `dist` directory
-
-### Chrome Installation
-
-1. Build the extension as described above
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" by toggling the switch in the top right
-4. Click "Load unpacked" and select the `dist` folder
-5. The extension should now be installed and active
-
-### Firefox Installation
-
-1. Build the extension as described above
-2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
-3. Click "Load Temporary Add-on..." and select the `manifest.json` file in the `dist` folder
-4. The extension should now be installed and active
 
 ## Usage
 
@@ -219,8 +218,6 @@ To work on the extension:
 2. Run `npm run build` to rebuild the extension
 3. For continuous development, use `npm run watch` to automatically rebuild when files change
 4. Reload the extension in your browser to see the changes
-
-
 
 ## Notes
 
