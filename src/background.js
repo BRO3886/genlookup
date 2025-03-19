@@ -39,7 +39,25 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             })
             .then((results) => {
               if (results && results.length > 0) {
-                const pageContent = results[0].result;
+                let pageContent = results[0].result;
+
+                // for very large pages, trim content around selected text
+                const maxContentLength = 20000;
+                if (pageContent.length > maxContentLength) {
+                  const selectedTextIndex = pageContent.indexOf(selectedText);
+                  const startTrimIndex = Math.max(
+                    0,
+                    selectedTextIndex - maxContentLength / 2
+                  );
+                  const endTrimIndex = Math.min(
+                    pageContent.length,
+                    selectedTextIndex + maxContentLength / 2
+                  );
+                  pageContent = pageContent.substring(
+                    startTrimIndex,
+                    endTrimIndex
+                  );
+                }
 
                 // Send to Ollama for explanation
                 explainWithOllama(selectedText, pageContent, tab.id).finally(
