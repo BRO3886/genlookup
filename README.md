@@ -1,10 +1,16 @@
 # GenLookup
 
+<a href="https://peerlist.io/siddhartha/project/genlookup">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/launchpad/Launch_SVG_Dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/launchpad/Launch_SVG_Light.svg">
+    <img src="assets/launchpad/Launch_SVG_Light.svg" alt="Launch Icon" style="width: 100px; height: auto;">
+  </picture>
+</a>
+
 This browser extension adds an "Lookup" option to the right-click context menu when text is selected on any webpage. It sends the selected text along with the page context to an Ollama server for lookup.
 
-
 https://github.com/user-attachments/assets/c17db7b9-a204-4ecf-bd24-d340e33633d4
-
 
 ## Installation
 
